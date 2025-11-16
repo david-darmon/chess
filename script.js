@@ -1,135 +1,74 @@
+// NewFile.js — יוצר את הלוח ומחבר את הבקרים
+const board = document.getElementById('board');
+const wrapper = document.getElementById('boardWrapper');
 
-:root{
-  --size: min(70vmin, 560px); /* גודל הלוח */
-  --light: #f0d9b5;
-  --dark: #b58863;
-  --accent: #2b2b2b;
-  --gap: 4px;
-}
+const persp = document.getElementById('persp');
+const rx = document.getElementById('rx');
+const ry = document.getElementById('ry');
+const resetBtn = document.getElementById('reset');
 
-* { box-sizing: border-box; }
-html,body{
-  height:100%;
-  margin:0;
-  direction: rtl; /* עברית */
-  font-family: "Segoe UI", Roboto, Arial, sans-serif;
-  background: linear-gradient(180deg,#0b1020,#0f1724);
-  color: #eee;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-}
+const perspVal = document.getElementById('perspVal');
+const rxVal = document.getElementById('rxVal');
+const ryVal = document.getElementById('ryVal');
 
-main{
-  min-height:100vh;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:20px;
-  padding:20px;
-}
+const files = ['א','ב','ג','ד','ה','ו','ז','ח']; // תוויות לדוגמה בעברית (אפשר לשנות)
+const ranks = ['8','7','6','5','4','3','2','1'];
 
-/* כותרת */
-h1{
-  margin:0;
-  font-size:1.6rem;
-  letter-spacing:0.02em;
-}
+// פונקציה לבניית הלוח (8x8)
+function buildBoard(){
+  board.innerHTML = '';
+  for(let r=0; r<8; r++){
+    for(let f=0; f<8; f++){
+      const sq = document.createElement('div');
+      sq.classList.add('square');
+      // צבע לפי parity
+      if((r + f) % 2 === 0) sq.classList.add('light');
+      else sq.classList.add('dark');
 
-/* שליטה */
-.controls{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  justify-content:center;
-  align-items:center;
-  width:100%;
-  max-width:900px;
-}
-.controls label{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-end;
-  gap:6px;
-  color:#ddd;
-  font-size:0.9rem;
-}
-.controls input[type=range]{ width:180px; }
-.controls button{
-  padding:8px 12px;
-  border-radius:8px;
-  border:none;
-  background:#1f6feb;
-  color:white;
-  cursor:pointer;
-  font-weight:600;
+      // הוספת קואורדינטה פנימית
+      const coord = document.createElement('span');
+      coord.className = 'coord';
+      coord.textContent = files[f] + ranks[r];
+      sq.appendChild(coord);
+
+      // אפשר להציג סימן באמצע (ריק כברירת מחדל)
+      // sq.textContent = ''; // או '♟' כדי לבדוק
+
+      // לחיצה מסמנת/מסירה סימון
+      sq.addEventListener('click', () => {
+        sq.classList.toggle('marked');
+      });
+
+      board.appendChild(sq);
+    }
+  }
 }
 
-/* הבמה והפרספקטיבה */
-.stage{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  width:100%;
+// פונקציה לעדכון transform לפי הסליידרים
+function updateTransform(){
+  const px = parseInt(rx.value,10);
+  const py = parseInt(ry.value,10);
+  board.style.transform = `rotateX(${px}deg) rotateY(${py}deg)`;
+  wrapper.style.perspective = `${persp.value}px`;
+
+  // עדכון תצוגת ערכים לצד הסליידרים
+  perspVal.textContent = persp.value;
+  rxVal.textContent = rx.value;
+  ryVal.textContent = ry.value;
 }
 
-/* ה-wrapper שבו נשנה perspective */
-#boardWrapper{
-  perspective: 800px; /* נשנה דרך JS לפי הסליידר */
-  width:var(--size);
-  height:var(--size);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+// לחצני אירועים
+persp.addEventListener('input', updateTransform);
+rx.addEventListener('input', updateTransform);
+ry.addEventListener('input', updateTransform);
 
-/* הלוח עצמו — ריבוע עם grid 8x8 */
-#board{
-  width:100%;
-  height:100%;
-  transform-style: preserve-3d;
-  transition: transform 300ms ease, box-shadow 200ms ease;
-  display:grid;
-  grid-template-columns: repeat(8, 1fr);
-  grid-template-rows: repeat(8, 1fr);
-  border-radius:12px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 4px 30px rgba(0,0,0,0.25);
-  overflow:hidden;
-}
+resetBtn.addEventListener('click', () => {
+  persp.value = 800;
+  rx.value = 30;
+  ry.value = 0;
+  updateTransform();
+});
 
-/* כל ריבוע */
-.square{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:0.85rem;
-  user-select:none;
-  cursor:pointer;
-  transition: transform 120ms ease, box-shadow 120ms ease;
-}
-
-/* צבעים על פי parity */
-.square.light{ background: var(--light); color: #1b1b1b; }
-.square.dark{ background: var(--dark); color: #fff; }
-
-/* סימון לחיצה */
-.square.marked{
-  outline: 3px solid rgba(255,215,0,0.85);
-  transform: translateZ(12px) scale(1.02);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.45);
-}
-
-/* איפיון קואורדינטות — תצוגה קטנה בפינה */
-.coord{
-  font-size:0.6rem;
-  opacity:0.6;
-  position:absolute;
-  bottom:6px;
-  left:6px;
-}
-
-/* רספונסיביות קטנה */
-@media (max-width:420px){
-  .controls input[type=range]{ width:120px; }
-  h1{ font-size:1.2rem; }
-}
+// אתחול
+buildBoard();
+updateTransform();
